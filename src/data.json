@@ -1,0 +1,160 @@
+[
+  {
+    "table": "VIP 1",
+    "guests": [
+      { "name": "Daddy Teo", "guestOf": "Kelvin" },
+      { "name": "Mommy Ng", "guestOf": "Kelvin" },
+      { "name": "Kelvin Teo", "guestOf": "Kelvin" },
+      { "name": "Gladys Tan", "guestOf": "Kelvin" },
+      { "name": "Jovan Teo", "guestOf": "Kelvin" },
+      { "name": "张家亮 叔叔", "guestOf": "Kelvin" },
+      { "name": "张家亮妻 婶婶", "guestOf": "Kelvin" },
+      { "name": "张亚德", "guestOf": "Kelvin" },
+      { "name": "张亚顺", "guestOf": "Kelvin" },
+      { "name": "张亚顺妻", "guestOf": "Kelvin" }
+    ]
+  },
+  {
+    "table": "VIP 2",
+    "guests": [
+      { "name": "Dad Tan", "guestOf": "Gladys" },
+      { "name": "Weena Tan", "guestOf": "Gladys" },
+      { "name": "Ahma Tan", "guestOf": "Gladys" },
+      { "name": "Gugu Tan", "guestOf": "Gladys" },
+      { "name": "Noel Carlin Tan", "guestOf": "Gladys" },
+      { "name": "Beibei Tan", "guestOf": "Gladys" },
+      { "name": "Agnes Tan", "guestOf": "Gladys" },
+      { "name": "Ah Po (Goh fam) Tan", "guestOf": "Gladys" },
+      { "name": "San Gor Po Tan", "guestOf": "Gladys" },
+      { "name": "AMK Li EmPo Tan", "guestOf": "Gladys" }
+    ]
+  },
+  {
+    "table": "Table 3",
+    "guests": [
+      { "name": "Zu Kuan Ng", "guestOf": "Kelvin" },
+      { "name": "Tai Ming Ng", "guestOf": "Kelvin" },
+      { "name": "Hadi Chen", "guestOf": "Kelvin" },
+      { "name": "Francesca Kok", "guestOf": "Kelvin" },
+      { "name": "Joshua Lam", "guestOf": "Kelvin" },
+      { "name": "Daniel Tong", "guestOf": "Kelvin" },
+      { "name": "Nicole Lim", "guestOf": "Kelvin" },
+      { "name": "Zizi Huang", "guestOf": "Kelvin" },
+      { "name": "Lynn", "guestOf": "Kelvin" },
+      { "name": "Aaron Tan", "guestOf": "Kelvin" }
+    ]
+  },
+  {
+    "table": "Table 5",
+    "guests": [
+      { "name": "Ah Gong Ng", "guestOf": "Kelvin" },
+      { "name": "Ah Ma Ng", "guestOf": "Kelvin" },
+      { "name": "Jayden Goh", "guestOf": "Kelvin" },
+      { "name": "Dylan Goh", "guestOf": "Kelvin" },
+      { "name": "黄综平 大舅", "guestOf": "Kelvin" },
+      { "name": "黄综平妻 大舅母", "guestOf": "Kelvin" },
+      { "name": "李伟涵 大姨丈", "guestOf": "Kelvin" },
+      { "name": "李伟涵妻 大姨", "guestOf": "Kelvin" },
+      { "name": "吴文益妻 小姨", "guestOf": "Kelvin" },
+      { "name": "Ani", "guestOf": "Kelvin" }
+    ]
+  },
+  {
+    "table": "Table 6",
+    "guests": [
+      { "name": "黄占明", "guestOf": "Kelvin" },
+      { "name": "黄占明妻", "guestOf": "Kelvin" },
+      { "name": "邱汉忠", "guestOf": "Kelvin" },
+      { "name": "邱汉忠妻", "guestOf": "Kelvin" },
+      { "name": "马明春", "guestOf": "Kelvin" },
+      { "name": "谢宝春", "guestOf": "Kelvin" },
+      { "name": "谢宝春妻", "guestOf": "Kelvin" },
+      { "name": "王顺发", "guestOf": "Kelvin" },
+      { "name": "王顺发妻", "guestOf": "Kelvin" }
+    ]
+  },
+  {
+    "table": "Table 7",
+    "guests": [
+      { "name": "Jun Liang Lee", "guestOf": "Kelvin" },
+      { "name": "Xin Zhi Lee", "guestOf": "Kelvin" },
+      { "name": "Daren Law", "guestOf": "Kelvin" },
+      { "name": "林鸿材", "guestOf": "Kelvin" },
+      { "name": "林鸿材妻", "guestOf": "Kelvin" },
+      { "name": "陈春荣", "guestOf": "Kelvin" },
+      { "name": "陈春荣妻", "guestOf": "Kelvin" },
+      { "name": "陈炳照", "guestOf": "Kelvin" },
+      { "name": "刘来福", "guestOf": "Kelvin" },
+      { "name": "刘来福妻", "guestOf": "Kelvin" }
+    ]
+  },
+  {
+    "table": "Table 8",
+    "guests": [
+      { "name": "Kelly gugu (Peh fam) Tan", "guestOf": "Gladys" },
+      { "name": "Steven Beibei (Goh fam) Tan", "guestOf": "Gladys" },
+      { "name": "Aunty Susan (Goh fam) Tan", "guestOf": "Gladys" },
+      { "name": "Darren Beibei (Goh fam) Tan", "guestOf": "Gladys" },
+      { "name": "Adeline Gugu Tan", "guestOf": "Gladys" },
+      { "name": "Sophia Gugu Tan", "guestOf": "Gladys" },
+      { "name": "Bao Zu Tan", "guestOf": "Gladys" },
+      { "name": "Gugu Godmom (Liem sis) Tan", "guestOf": "Gladys" },
+      { "name": "Gugu Goddad Tan", "guestOf": "Gladys" }
+    ]
+  },
+  {
+    "table": "Table 9",
+    "guests": [
+      { "name": "Dua Gu (Peh fam) Tan", "guestOf": "Gladys" },
+      { "name": "Dua Kim (Peh fam) Tan", "guestOf": "Gladys" },
+      { "name": "Tracy gugu (Peh fam) Tan", "guestOf": "Gladys" },
+      { "name": "Irene gugu (Peh fam) Tan", "guestOf": "Gladys" },
+      { "name": "Li Gu (Peh fam) Tan", "guestOf": "Gladys" },
+      { "name": "Li Kim (Peh fam) Tan", "guestOf": "Gladys" },
+      { "name": "Yi Po (Lai fam) Tan", "guestOf": "Gladys" },
+      { "name": "Yi Diu (Lai fam) Tan", "guestOf": "Gladys" }
+    ]
+  },
+  {
+    "table": "Table 10",
+    "guests": [
+      { "name": "Vincent, Wei Xiang", "guestOf": "Gladys" },
+      { "name": "Ah Boy, Tim's Wife", "guestOf": "Gladys" },
+      { "name": "Ah Boy, Tim Goh", "guestOf": "Gladys" },
+      { "name": "Ivan Tan", "guestOf": "Gladys" },
+      { "name": "Izaac Tan", "guestOf": "Gladys" },
+      { "name": "Dong Yi Beh", "guestOf": "Gladys" },
+      { "name": "Joyann Lee", "guestOf": "Gladys" },
+      { "name": "Binghui", "guestOf": "Gladys" },
+      { "name": "Kengkang Lee", "guestOf": "Gladys" },
+      { "name": "Claudia (Izaac gf)", "guestOf": "Gladys" }
+    ]
+  },
+  {
+    "table": "Table 11",
+    "guests": [
+      { "name": "Rumin Ong", "guestOf": "Gladys" },
+      { "name": "Ding Wei (fatk) Chan", "guestOf": "Gladys" },
+      { "name": "Angel Ng", "guestOf": "Gladys" },
+      { "name": "Michelle Gan", "guestOf": "Gladys" },
+      { "name": "Josephine", "guestOf": "Gladys" },
+      { "name": "Jacelyn", "guestOf": "Gladys" },
+      { "name": "Dorothy", "guestOf": "Gladys" },
+      { "name": "Marcus Kwek", "guestOf": "Gladys" },
+      { "name": "Yvonne Goh", "guestOf": "Gladys" }
+    ]
+  },
+  {
+    "table": "Table 12",
+    "guests": [
+      { "name": "Jimmy Xu", "guestOf": "Gladys" },
+      { "name": "Eunice", "guestOf": "Gladys" },
+      { "name": "Jaey Lee", "guestOf": "Gladys" },
+      { "name": "Aaron Teo", "guestOf": "Gladys" },
+      { "name": "Qian Wei Law", "guestOf": "Gladys" },
+      { "name": "Raine Khoo", "guestOf": "Gladys" },
+      { "name": "Naraporn Thamarak", "guestOf": "Gladys" },
+      { "name": "Jack Toh", "guestOf": "Gladys" }
+    ]
+  }
+]

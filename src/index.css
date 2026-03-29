@@ -1,0 +1,59 @@
+:root {
+    font-family: 'Poppins', system-ui, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    /* Light theme tokens */
+    --bg: #f0f4fb;
+    --surface: #ffffff;
+    --border: #d5e0f5;
+    --text: #1a2540;
+    --text-muted: #7a8aaa;
+    --accent: #3b6fd4;
+    --accent-hover: #2d5bbf;
+    --accent-fg: #ffffff;
+    --badge-bg: #e4ecfb;
+    --badge-text: #3b6fd4;
+    --mark-color: #3b6fd4;
+}
+
+html[data-dark="true"] {
+    /* Dark theme tokens */
+    --bg: #111827;
+    --surface: #1c2741;
+    --border: #2a3a5c;
+    --text: #e8eef8;
+    --text-muted: #6478a0;
+    --accent: #6b9aee;
+    --accent-hover: #85aef2;
+    --accent-fg: #111827;
+    --badge-bg: #1e3060;
+    --badge-text: #6b9aee;
+    --mark-color: #6b9aee;
+}
+
+html {
+    background-color: var(--bg);
+    color: var(--text);
+    transition: background-color 0.2s, color 0.2s;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
