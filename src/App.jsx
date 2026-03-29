@@ -420,7 +420,7 @@ export default function App() {
             </div>
             <footer className="footer">
                 <div className='footer-item'>
-                    <span>Made with <span className="footer-heart">♥</span> for our wedding</span>
+                    <span>Made with <span className="footer-heart">♥</span> for Hadi & Francesca by Kelvin</span>
                 </div>
             </footer>
         </>
