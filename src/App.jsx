@@ -357,7 +357,7 @@ function TableOverlay({selectedKey, onSelect, className, hotspotR = 46}) {
     )
 }
 
-const MAX_ZOOM = 4
+const MAX_ZOOM = 8
 
 /* Fullscreen floor plan, as a lightbox. A phone gives the map ~390px of width
    inline, rendering table numbers at ~8px. Here the plan is sized to fill the
@@ -372,17 +372,15 @@ function FloorPlanViewer({onClose, t}) {
     const pointers = useRef(new Map())
     const gesture = useRef(null)
 
-    // Fill the stage vertically and let the room run off the sides; zooming out
-    // to minZoom brings the whole plan back into view.
+    // Open on the whole room so a guest gets their bearings first, then zooms
+    // in to read it. Zoom 1 is the full plan; there is nothing to zoom out to.
     const measure = useCallback(() => {
         const el = stageRef.current
         if (!el) return
         const {width: w, height: h} = el.getBoundingClientRect()
         const PAD = 16
-        const fillH = (h - PAD) / MAP_H
-        const contain = Math.min((w - PAD) / MAP_W, fillH)
-        const base = Math.max(fillH, contain)
-        setFit({base, minZoom: Math.min(1, contain / base)})
+        const contain = Math.min((w - PAD) / MAP_W, (h - PAD) / MAP_H)
+        setFit({base: contain, minZoom: 1})
     }, [])
 
     useLayoutEffect(() => {
@@ -443,7 +441,9 @@ function FloorPlanViewer({onClose, t}) {
 
     const onPointerDown = e => {
         pointers.current.set(e.pointerId, {x: e.clientX, y: e.clientY})
-        e.currentTarget.setPointerCapture?.(e.pointerId)
+        // capture can reject a pointer the browser has already released; a throw
+        // here would abort before the gesture is recorded and kill pan/pinch
+        try { e.currentTarget.setPointerCapture?.(e.pointerId) } catch { /* not capturable */ }
         const pts = [...pointers.current.values()]
         if (pts.length === 2) {
             const dx = pts[0].x - pts[1].x, dy = pts[0].y - pts[1].y
