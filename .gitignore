@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Full-resolution photo shoot originals (~750MB) — source for slider-img crops,
+# kept locally so images can be re-cropped without re-downloading
+src/assets/pws/

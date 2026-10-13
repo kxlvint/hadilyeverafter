@@ -541,7 +541,7 @@ function FloorPlanViewer({onClose, t}) {
                     <div className="fp-sheet-header">
                         <span>{t.tableLabel(selected)}</span>
                         <span className="table-guest-count">
-                            <FiUsers size={11}/>
+                            <FiUsers size={13}/>
                             {sheetGuests.length}
                         </span>
                         <button className="popover-close-btn" onClick={() => setSelected(null)}
@@ -551,7 +551,7 @@ function FloorPlanViewer({onClose, t}) {
                         {sheetGuests.map((g, i) => (
                             <li key={i} className="table-popover-guest">
                                 <span>{g.name}</span>
-                                <GuestIcon guestOf={g.guestOf} size={16}/>
+                                <GuestIcon guestOf={g.guestOf} size={19}/>
                             </li>
                         ))}
                     </ul>
@@ -634,7 +634,7 @@ function SeatingMap({t}) {
                 <button className="seating-expand" onClick={e => {
                     e.stopPropagation(); setExpanded(true)
                 }}>
-                    <FiMaximize2 size={13}/>
+                    <FiMaximize2 size={15}/>
                     <span>{t.viewFloorPlan}</span>
                 </button>
 
@@ -653,7 +653,7 @@ function SeatingMap({t}) {
                             <span>{t.tableLabel(popover.key)}</span>
                             <div className="table-popover-header-right">
                                 <span className="table-guest-count">
-                                    <FiUsers size={11}/>
+                                    <FiUsers size={13}/>
                                     {tableGuests.length}
                                 </span>
                                 <button className="popover-close-btn" onClick={closePopover}
@@ -665,7 +665,7 @@ function SeatingMap({t}) {
                                 {tableGuests.map((g, i) => (
                                     <li key={i} className="table-popover-guest">
                                         <span>{g.name}</span>
-                                        <GuestIcon guestOf={g.guestOf} size={16}/>
+                                        <GuestIcon guestOf={g.guestOf} size={19}/>
                                     </li>
                                 ))}
                             </ul>
@@ -764,7 +764,7 @@ export default function App() {
                 <div className={`sticky-bar${scrolled ? ' sticky-bar--active' : ''}`}>
                     <button className="menu-btn-sticky" onClick={() => !menuClosing && setShowMenu(true)}
                             aria-label="View menu">
-                        <FaBowlFood size={14}/>
+                        <FaBowlFood size={16}/>
                         <span className="menu-btn-label">{t.menuLabel}</span>
                     </button>
                     <div className="lang-switcher">
