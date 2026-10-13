@@ -365,10 +365,12 @@ const MAX_ZOOM = 8
    so turning the phone never flips the map out from under them. */
 function FloorPlanViewer({onClose, t}) {
     const [fit, setFit] = useState(null)   // { base, minZoom }
+    const [stage, setStage] = useState(null) // stage box in CSS px
     const [zoom, setZoom] = useState(1)
     const [pan, setPan] = useState({x: 0, y: 0})
     const [selected, setSelected] = useState(null)
     const stageRef = useRef(null)
+    const cardRef = useRef(null)
     const pointers = useRef(new Map())
     const gesture = useRef(null)
 
@@ -380,6 +382,7 @@ function FloorPlanViewer({onClose, t}) {
         const {width: w, height: h} = el.getBoundingClientRect()
         const PAD = 16
         const contain = Math.min((w - PAD) / MAP_W, (h - PAD) / MAP_H)
+        setStage({w, h})
         setFit({base: contain, minZoom: 1})
     }, [])
 
@@ -441,9 +444,6 @@ function FloorPlanViewer({onClose, t}) {
 
     const onPointerDown = e => {
         pointers.current.set(e.pointerId, {x: e.clientX, y: e.clientY})
-        // capture can reject a pointer the browser has already released; a throw
-        // here would abort before the gesture is recorded and kill pan/pinch
-        try { e.currentTarget.setPointerCapture?.(e.pointerId) } catch { /* not capturable */ }
         const pts = [...pointers.current.values()]
         if (pts.length === 2) {
             const dx = pts[0].x - pts[1].x, dy = pts[0].y - pts[1].y
@@ -453,6 +453,16 @@ function FloorPlanViewer({onClose, t}) {
         }
     }
 
+    // Capturing on pointerdown would retarget the following click to the stage,
+    // so a tap would never reach the table circles. Capture only once a drag is
+    // actually under way, which is the only time we need events off-element.
+    const captureNow = e => {
+        const g = gesture.current
+        if (!g || g.captured) return
+        try { e.currentTarget.setPointerCapture?.(e.pointerId) } catch { /* not capturable */ }
+        g.captured = true
+    }
+
     const onPointerMove = e => {
         if (!pointers.current.has(e.pointerId)) return
         pointers.current.set(e.pointerId, {x: e.clientX, y: e.clientY})
@@ -460,12 +470,14 @@ function FloorPlanViewer({onClose, t}) {
         const g = gesture.current
         if (!g) return
         if (pts.length >= 2 && g.dist) {
+            captureNow(e)
             const dx = pts[0].x - pts[1].x, dy = pts[0].y - pts[1].y
             const dist = Math.hypot(dx, dy)
             applyZoom(g.zoom * (dist / g.dist), (pts[0].x + pts[1].x) / 2, (pts[0].y + pts[1].y) / 2)
         } else if (pts.length === 1 && g.pan) {
             const dx = e.clientX - g.from.x, dy = e.clientY - g.from.y
             g.moved = Math.max(g.moved, Math.hypot(dx, dy))
+            if (g.moved > 4) captureNow(e)
             setPan(clampPan({x: g.pan.x + dx, y: g.pan.y + dy}, zoom))
         }
     }
@@ -492,7 +504,37 @@ function FloorPlanViewer({onClose, t}) {
         setSelected(cur => cur === key ? null : key)
     }
 
-    const sheetGuests = selected ? guestsAt(selected) : []
+    const cardGuests = selected ? guestsAt(selected) : []
+
+    // Project the selected table's map coordinates into screen space so the
+    // card can sit beside it and follow it through pan and zoom, while its own
+    // text stays outside the transform and therefore a constant size.
+    // onScreen: panning the table out of view takes its card with it, rather
+    // than leaving one pinned to an edge pointing at nothing.
+    const anchor = useMemo(() => {
+        const pos = selected && ACTIVE_TABLES.find(p => p.key === selected)
+        if (!pos || !fit || !stage) return null
+        const s = fit.base * zoom
+        const x = stage.w / 2 + pan.x + (pos.cx - MAP_W / 2) * s
+        const y = stage.h / 2 + pan.y + (pos.cy - MAP_H / 2) * s
+        const r = 52 * s
+        return {x, y, r, onScreen: x > -r && x < stage.w + r && y > -r && y < stage.h + r}
+    }, [selected, fit, stage, zoom, pan])
+
+    // Prefer the side of the table with more room, then keep the card on screen.
+    useLayoutEffect(() => {
+        const el = cardRef.current
+        if (!el || !anchor || !stage) return
+        const GAP = 12, EDGE = 10
+        // offset*, not a rect: the open animation scales the card, and a
+        // transformed rect would place it against a size it is about to leave
+        const cw = el.offsetWidth, ch = el.offsetHeight
+        const left = anchor.x + anchor.r + GAP + cw <= stage.w - EDGE
+            ? anchor.x + anchor.r + GAP
+            : anchor.x - anchor.r - GAP - cw
+        el.style.left = `${Math.max(EDGE, Math.min(left, stage.w - cw - EDGE))}px`
+        el.style.top = `${Math.max(EDGE, Math.min(anchor.y - ch / 2, stage.h - ch - EDGE))}px`
+    }, [anchor, stage, cardGuests.length])
 
     return (
         <div className="fp-overlay">
@@ -534,31 +576,39 @@ function FloorPlanViewer({onClose, t}) {
                         />
                     </div>
                 )}
-            </div>
 
-            {selected ? (
-                <div className="fp-sheet">
-                    <div className="fp-sheet-header">
-                        <span>{t.tableLabel(selected)}</span>
-                        <span className="table-guest-count">
-                            <FiUsers size={13}/>
-                            {sheetGuests.length}
-                        </span>
-                        <button className="popover-close-btn" onClick={() => setSelected(null)}
-                                aria-label={t.close}>✕</button>
+                {/* The card owns its pointer and wheel events: without this the
+                    stage would read a scroll of the guest list as a map pan or
+                    zoom, and the list could never be scrolled. */}
+                {anchor?.onScreen && (
+                    <div
+                        ref={cardRef}
+                        className="fp-card"
+                        onPointerDown={e => e.stopPropagation()}
+                        onWheel={e => e.stopPropagation()}
+                    >
+                        <div className="fp-card-header">
+                            <span>{t.tableLabel(selected)}</span>
+                            <span className="table-guest-count">
+                                <FiUsers size={13}/>
+                                {cardGuests.length}
+                            </span>
+                            <button className="popover-close-btn" onClick={() => setSelected(null)}
+                                    aria-label={t.close}>✕</button>
+                        </div>
+                        <ul className="fp-card-list">
+                            {cardGuests.map((g, i) => (
+                                <li key={i} className="table-popover-guest">
+                                    <span>{g.name}</span>
+                                    <GuestIcon guestOf={g.guestOf} size={19}/>
+                                </li>
+                            ))}
+                        </ul>
                     </div>
-                    <ul className="fp-sheet-list">
-                        {sheetGuests.map((g, i) => (
-                            <li key={i} className="table-popover-guest">
-                                <span>{g.name}</span>
-                                <GuestIcon guestOf={g.guestOf} size={19}/>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            ) : (
-                <p className="fp-hint">{t.pinchHint}</p>
-            )}
+                )}
+
+                {!selected && <p className="fp-hint">{t.pinchHint}</p>}
+            </div>
         </div>
     )
 }

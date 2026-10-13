@@ -935,23 +935,32 @@
     gap: 0.5rem;
 }
 
+/* Secondary controls, so they follow the page's borderless-text idiom rather
+   than introducing a third button style: a white bordered pill read as a
+   floating chip against the cream overlay. */
 .fp-btn {
-    border: 1.5px solid var(--border);
-    background: var(--surface);
+    border: none;
+    background: none;
     color: var(--text-muted);
-    border-radius: 999px;
-    font-size: 0.72rem;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
     font-weight: 600;
+    letter-spacing: 0.04em;
     line-height: 1;
-    padding: 0.45rem 0.7rem;
-    min-width: 44px;
-    min-height: 32px;
-    transition: color 0.15s, border-color 0.15s;
+    padding: 0.5rem 0.7rem;
+    min-width: 36px;
+    min-height: 36px;
+    transition: color 0.15s, background 0.15s;
 }
 
 .fp-btn:hover {
-    color: var(--accent);
-    border-color: var(--accent);
+    color: var(--accent-text);
+    background: var(--badge-bg);
+}
+
+.fp-close {
+    font-size: 15px;
 }
 
 .fp-stage {
@@ -1007,61 +1016,51 @@
     background: linear-gradient(to top, var(--bg) 55%, transparent);
 }
 
-.fp-sheet {
+/* The guest list sits beside the table it belongs to and tracks it through pan
+   and zoom (position is set in JS). Being outside the transformed canvas, its
+   text stays at a readable size whatever the zoom level. */
+.fp-card {
     position: absolute;
+    top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
     z-index: 10;
-    max-height: 45%;
+    width: min(252px, 68vw);
+    max-height: min(58%, 420px);
     display: flex;
     flex-direction: column;
-    border-top: 1.5px solid var(--border);
     background: var(--surface);
-    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.22);
-    border-radius: 14px 14px 0 0;
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
-    animation: sheetIn 0.2s ease both;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+    text-align: left;
+    overflow: hidden;
+    animation: popoverIn 0.15s ease both;
 }
 
-@keyframes sheetIn {
-    from { transform: translateY(100%); }
-    to   { transform: translateY(0); }
-}
-
-.fp-sheet-header {
+.fp-card-header {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    padding: 0.8rem 0.7rem 0.8rem 1.15rem;
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text);
+    gap: 0.5rem;
+    padding: 0.5rem 0.5rem 0.5rem 0.85rem;
     background: var(--badge-bg);
-    border-radius: 14px 14px 0 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
 }
 
-.fp-sheet-header > span:first-child {
+.fp-card-header > span:first-child {
     flex: 1;
-    text-align: left;
+    min-width: 0;
 }
 
-.fp-sheet-list {
+.fp-card-list {
     list-style: none;
     margin: 0;
-    padding: 0 0 0.4rem;
+    padding: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
-    text-align: left;
-}
-
-/* wider gutters than the anchored popover: this one spans the full screen
-   width, so its ends sit where the display curves away */
-.fp-sheet .table-popover-guest {
-    padding: 0.72rem 1.15rem;
-    font-size: 15px;
+    touch-action: pan-y;      /* the stage disables touch gestures; opt back in */
 }
 
 
