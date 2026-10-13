@@ -1,12 +1,11 @@
-import {useState, useMemo, useEffect, useRef} from 'react'
+import {useState, useMemo, useEffect, useLayoutEffect, useRef, useCallback, Fragment} from 'react'
 import {IoMdBowtie} from 'react-icons/io'
 import {GiTiara} from 'react-icons/gi'
-import {FiUsers} from 'react-icons/fi'
-import {MdDarkMode, MdLightMode} from 'react-icons/md'
+import {FiUsers, FiMaximize2} from 'react-icons/fi'
 import {FaBowlFood} from 'react-icons/fa6'
 import Fuse from 'fuse.js'
 import tableData from './data.json'
-import {locales, detectLocale} from './locales'
+import {locales, localeOptions, shortCode, detectLocale} from './locales'
 import './App.css'
 import seatingImg from './assets/seating.png'
 
@@ -17,8 +16,11 @@ import img4 from './assets/slider-img/4.webp'
 import img5 from './assets/slider-img/5.webp'
 import img6 from './assets/slider-img/6.webp'
 import img7 from './assets/slider-img/7.webp'
+import img8 from './assets/slider-img/8.webp'
+import img9 from './assets/slider-img/9.webp'
+import img10 from './assets/slider-img/10.webp'
 
-const PHOTOS = [img1, img2, img3, img4, img5, img6, img7]
+const PHOTOS = [img1, img2, img3, img4, img5, img6, img7, img8, img9, img10]
 
 function PhotoStrip() {
     const doubled = [...PHOTOS, ...PHOTOS]
@@ -42,47 +44,183 @@ function PhotoStrip() {
 
 const guests = tableData.flatMap(({table, guests}) => guests.map(g => ({...g, table})))
 
-function TextLoop({items}) {
-    const [index, setIndex] = useState(0)
-    const [visible, setVisible] = useState(true)
-
-    useEffect(() => {
-        const id = setInterval(() => {
-            setVisible(false)
-            setTimeout(() => {
-                setIndex(i => (i + 1) % items.length)
-                setVisible(true)
-            }, 350)
-        }, 2500)
-        return () => clearInterval(id)
-    }, [items])
-
-    return <p className={`text-loop${visible ? ' visible' : ''}`}>{items[index]}</p>
+/* Both menus run the same eight courses, so the labels live here once and the
+   tabs stay aligned course-for-course when a guest switches between them. */
+const COURSE = {
+    starters:  {en: 'Starters',  zh: '前菜', bn: 'স্টার্টার'},
+    soup:      {en: 'Soup',      zh: '汤', bn: 'স্যুপ'},
+    seafood:   {en: 'Seafood',   zh: '海鲜', bn: 'সামুদ্রিক'},
+    fish:      {en: 'Fish',      zh: '鱼', bn: 'মাছ'},
+    meat:      {en: 'Meat',      zh: '肉', bn: 'মাংস'},
+    vegetable: {en: 'Vegetable', zh: '蔬菜', bn: 'সবজি'},
+    noodle:    {en: 'Noodle',    zh: '面', bn: 'নুডল'},
+    dessert:   {en: 'Dessert',   zh: '甜品', bn: 'ডেজার্ট'},
 }
 
-const MENU = {
-    appetizer: [
-        {
-            en: 'Chilled Lobster with Organic Red Quinoa, Salad Ice Plant and Roasted Sesame Dressing',
-            zh: '有机红藜麦龙虾冰菜沙律'
-        },
-        {en: 'Chilled Japanese Scallop with Cucumber Salad in Mild Garlic Dressing', zh: '凉拌日本带子蒜茸黄瓜'},
-        {en: 'California Maki Mini', zh: '海鲜加州卷'},
-        {en: 'Crispy Roasted Pork Belly with Dijon Mustard', zh: '烧肉伴芥末酱'},
-        {en: 'Fried Hokkien Hae Zhor Crabmeat Ball', zh: '脆炸鲜蟹枣'},
-    ],
-    courses: [
-        {en: 'Braised Golden Seafood Soup with Shredded Abalone and Conpoy', zh: '红烧鲍鱼丝海味羹'},
-        {en: 'Traditional Roasted Duck with XO Sauce', zh: 'XO酱挂炉烧鸭'},
-        {en: 'Stir-fried Scallop with Black Truffle Paste, Milky Egg White and Asparagus', zh: '露笋松露酱炒芙蓉带子'},
-        {en: 'Steamed Sea Garoupa in Hong Kong Style', zh: '港式清蒸海斑'},
-        {en: 'Slow-cooked Sea Cucumber with Fish Maw and Seasonal Vegetable', zh: '古法海参鱼鳔伴菠菜'},
-        {en: 'Fragrant XO Fried Rice with Crab Meat and Pine Nut', zh: '极品酱松子蟹肉乌达炒饭'},
-        {en: 'Teochew Sweetened Taro Paste with Gingko Nut, Chestnut and Coconut Cream', zh: '椰汁栗子银杏香芋艿蓉'},
-    ],
-}
+/* Each menu is one tab. `items` is a course served as a platter, `dish` a
+   single plate; each carries its own translations so the whole menu follows
+   the language switch, not just the course labels. */
+const MENUS = [
+    {
+        id: 'chinese',
+        label: {en: 'Chinese', zh: '中式', bn: 'চাইনিজ'},
+        courses: [
+            {
+                label: COURSE.starters,
+                items: [
+                    {en: 'Roast Pork Belly', zh: '脆皮烧肉', bn: 'রোস্ট পর্ক বেলি'},
+                    {en: 'Smoked Duck with Mango Salsa', zh: '烟熏鸭伴芒果莎莎', bn: 'স্মোকড ডাক, ম্যাঙ্গো সালসা সহ'},
+                    {en: 'Crispy Spiced Silver Bait', zh: '椒盐银鱼仔', bn: 'মসলাদার মুচমুচে সিলভার বেইট'},
+                    {en: 'Braised Chicken in Chilli Oil', zh: '红油浸鸡', bn: 'চিলি অয়েলে ব্রেইজড চিকেন'},
+                ],
+            },
+            {
+                label: COURSE.soup,
+                dish: {
+                    en: 'Braised Mock Shark Fin Soup with Dried Scallop and Crabmeat',
+                    zh: '瑶柱蟹肉烩碗仔翅',
+                    bn: 'শুকনো স্ক্যালপ ও কাঁকড়ার মাংস সহ মক শার্ক ফিন স্যুপ',
+                },
+            },
+            {
+                label: COURSE.seafood,
+                dish: {en: 'Sautéed Scallop', zh: '香炒带子', bn: 'সতে করা স্ক্যালপ'},
+                note: {en: 'XO sauce', zh: 'XO酱', bn: 'XO সস'},
+            },
+            {
+                label: COURSE.fish,
+                dish: {en: 'Steamed Grouper', zh: '清蒸石斑', bn: 'ভাপে সেদ্ধ গ্রুপার'},
+                note: {en: 'Superior soy sauce', zh: '豉油皇', bn: 'সুপিরিয়র সয়া সস'},
+            },
+            {
+                label: COURSE.meat,
+                dish: {en: 'Crispy Duck with Chinese Pancake', zh: '脆皮烤鸭伴薄饼', bn: 'মুচমুচে হাঁস, চাইনিজ প্যানকেক সহ'},
+            },
+            {
+                label: COURSE.vegetable,
+                dish: {en: 'Wok-fried HK Nai Bai', zh: '清炒奶白菜', bn: 'ওক-ফ্রায়েড নাই বাই শাক'},
+            },
+            {
+                label: COURSE.noodle,
+                dish: {
+                    en: 'Braised White Jade Noodle with Sea Treasures',
+                    zh: '海味烩白玉面',
+                    bn: 'সামুদ্রিক স্বাদে ব্রেইজড হোয়াইট জেড নুডল',
+                },
+            },
+            {
+                label: COURSE.dessert,
+                dish: {
+                    en: 'Double-boiled Peach Resin with Snow Pear and White Fungus',
+                    zh: '炖桃胶雪梨银耳',
+                    bn: 'পিচ রেজিন, স্নো পিয়ার ও হোয়াইট ফাঙ্গাস',
+                },
+                note: {en: 'Served cold', zh: '冰镇', bn: 'ঠান্ডা পরিবেশিত'},
+            },
+        ],
+    },
+    {
+        id: 'halal',
+        label: {en: 'Halal', zh: '清真', bn: 'হালাল'},
+        courses: [
+            {
+                label: COURSE.starters,
+                items: [
+                    {en: 'Chicken Ngoh Hiang', zh: '鸡肉五香卷', bn: 'চিকেন ঙো হিয়াং'},
+                    {
+                        en: 'Steamed Shanghai Dumpling with Vinegar Dip',
+                        zh: '上海小笼包伴香醋',
+                        bn: 'ভাপে সেদ্ধ সাংহাই ডাম্পলিং, ভিনেগার ডিপ সহ',
+                    },
+                    {en: 'Golden Fish Roll', zh: '黄金鱼卷', bn: 'গোল্ডেন ফিশ রোল'},
+                    {en: 'Thai Fish Cake', zh: '泰式鱼饼', bn: 'থাই ফিশ কেক'},
+                ],
+            },
+            {
+                label: COURSE.soup,
+                dish: {en: 'Seafood Cioppino', zh: '意式海鲜汤', bn: 'সীফুড চিওপিনো'},
+            },
+            {
+                label: COURSE.seafood,
+                dish: {en: 'Fragrant Oat Cereal Prawn', zh: '香脆麦片虾球', bn: 'ওটস সিরিয়াল চিংড়ি'},
+            },
+            {
+                label: COURSE.fish,
+                dish: {en: 'Teochew-style Steamed Fish', zh: '潮州蒸鱼', bn: 'তেওচিউ স্টাইলে ভাপে সেদ্ধ মাছ'},
+            },
+            {
+                label: COURSE.meat,
+                dish: {en: 'Mongolian Glazed Chicken', zh: '蒙古烧汁鸡', bn: 'মঙ্গোলিয়ান গ্লেজড চিকেন'},
+            },
+            {
+                label: COURSE.vegetable,
+                dish: {en: 'Broccoli with Shimeji Mushroom', zh: '西兰花炒蟹味菇', bn: 'ব্রোকলি ও শিমেজি মাশরুম'},
+            },
+            {
+                label: COURSE.noodle,
+                dish: {en: 'Wok-fried White Bee Hoon', zh: '干炒白米粉', bn: 'ওক-ফ্রায়েড সাদা বি হুন'},
+                note: {en: 'or Yang Chow Fried Rice', zh: '或扬州炒饭', bn: 'অথবা ইয়াং চাও ফ্রায়েড রাইস'},
+            },
+            {
+                label: COURSE.dessert,
+                dish: {en: 'Mango Pomelo Sago', zh: '杨枝甘露', bn: 'ম্যাঙ্গো পোমেলো সাগু'},
+            },
+        ],
+    },
+    {
+        id: 'vegetarian',
+        label: {en: 'Vegetarian', zh: '素食', bn: 'নিরামিষ'},
+        // seven courses rather than eight — this menu has no fish course
+        courses: [
+            {
+                label: COURSE.starters,
+                dish: {en: 'Deep-fried Crispy Vegetarian Rolls', zh: '香酥素春卷', bn: 'মুচমুচে ভেজিটেরিয়ান রোল'},
+            },
+            {
+                label: COURSE.soup,
+                dish: {en: 'Sweet Corn Soup with White Fungus', zh: '银耳粟米羹', bn: 'সুইট কর্ন ও হোয়াইট ফাঙ্গাস স্যুপ'},
+            },
+            {
+                label: COURSE.seafood,
+                dish: {
+                    en: 'Sweet & Sour Mock Prawn with Mixed Fruits',
+                    zh: '咕噜素虾球伴鲜果',
+                    bn: 'টক-মিষ্টি মক চিংড়ি, মিশ্র ফল সহ',
+                },
+            },
+            {
+                label: COURSE.meat,
+                dish: {en: 'Sautéed Mock Chicken with Dried Chillies', zh: '干辣椒炒素鸡', bn: 'শুকনো মরিচ সহ সতে করা মক চিকেন'},
+            },
+            {
+                label: COURSE.vegetable,
+                dish: {
+                    en: 'Braised Sliced Vegetarian Abalone with Black Mushroom and Seasonal Vegetable',
+                    zh: '北菇时蔬烩素鲍片',
+                    bn: 'ব্ল্যাক মাশরুম ও মৌসুমি সবজি সহ ব্রেইজড ভেজিটেরিয়ান অ্যাবালোন',
+                },
+            },
+            {
+                label: COURSE.noodle,
+                dish: {en: 'Stewed Ee-Fu Noodle', zh: '干烧伊面', bn: 'স্টিউড ই-ফু নুডল'},
+            },
+            {
+                label: COURSE.dessert,
+                dish: {
+                    en: 'Double-boiled Peach Resin with Snow Pear and White Fungus',
+                    zh: '炖桃胶雪梨银耳',
+                    bn: 'পিচ রেজিন, স্নো পিয়ার ও হোয়াইট ফাঙ্গাস',
+                },
+                note: {en: 'Served cold', zh: '冰镇', bn: 'ঠান্ডা পরিবেশিত'},
+            },
+        ],
+    },
+]
 
 function MenuModal({onClose, closing, t, locale}) {
+    const available = MENUS.filter(m => m.courses.length > 0)
+    const [active, setActive] = useState(available[0]?.id)
+
     useEffect(() => {
         const onKey = e => {
             if (e.key === 'Escape') onClose()
@@ -91,29 +229,46 @@ function MenuModal({onClose, closing, t, locale}) {
         return () => window.removeEventListener('keydown', onKey)
     }, [onClose])
 
-    const isZh = locale === 'zh-CN'
+    const menu = available.find(m => m.id === active) ?? available[0]
+    const text = l => l[shortCode(locale)] ?? l.en
 
     return (
         <div className={`modal-overlay${closing ? ' closing' : ''}`} onClick={onClose}>
             <div className={`modal${closing ? ' closing' : ''}`} onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                     <span className="modal-title">{t.menuTitle}</span>
-                    <button className="popover-close-btn modal-close" onClick={onClose}>✕</button>
+                    <button className="popover-close-btn modal-close" onClick={onClose}
+                            aria-label={t.close}>✕</button>
                 </div>
-                <div className="modal-body">
-                    <div className="menu-section-label">{t.menuAppetizer}</div>
-                    <ul className="menu-list">
-                        {MENU.appetizer.map((item, i) => (
-                            <li key={i} className="menu-item">
-                                {isZh ? item.zh : item.en}
-                            </li>
+
+                {available.length > 1 && (
+                    <div className="menu-tabs" role="tablist">
+                        {available.map(m => (
+                            <button
+                                key={m.id}
+                                role="tab"
+                                aria-selected={m.id === menu.id}
+                                className={`menu-tab${m.id === menu.id ? ' active' : ''}`}
+                                onClick={() => setActive(m.id)}
+                            >{text(m.label)}</button>
                         ))}
-                    </ul>
-                    <div className="menu-divider"/>
-                    {MENU.courses.map((item, i) => (
-                        <div key={i} className={`menu-course${i === 0 ? ' first' : ''}`}>
-                            <span className="menu-course-num">{i + 1}</span>
-                            <span className="menu-course-text">{isZh ? item.zh : item.en}</span>
+                    </div>
+                )}
+
+                <div className="modal-body">
+                    {menu?.courses.map((c, i) => (
+                        <div key={i} className="menu-course">
+                            <span className="menu-course-label">{text(c.label)}</span>
+                            <div className="menu-course-body">
+                                {c.items ? (
+                                    <ul className="menu-platter">
+                                        {c.items.map((it, j) => <li key={j}>{text(it)}</li>)}
+                                    </ul>
+                                ) : (
+                                    <span className="menu-course-text">{text(c.dish)}</span>
+                                )}
+                                {c.note && <span className="menu-course-note">{text(c.note)}</span>}
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -122,41 +277,324 @@ function MenuModal({onClose, closing, t, locale}) {
     )
 }
 
-// cx/cy are in the 721×505 image pixel space
+// cx/cy are in the 1600×895 seating.png pixel space (matches the SVG viewBox below)
+const MAP_W = 1600
+const MAP_H = 895
+
 const TABLE_POSITIONS = [
-    // {key: 'Table 3', cx: 180, cy: 130},
-    // {key: 'Table 5', cx: 101, cy: 222},
-    // {key: 'VIP 1', cx: 233, cy: 233},
-    // {key: 'Table 6', cx: 73, cy: 347},
-    // {key: 'Table 7', cx: 193, cy: 350},
-    // {key: 'VIP 2', cx: 425, cy: 239},
-    // {key: 'Table 8', cx: 391, cy: 350},
-    // {key: 'Table 9', cx: 517, cy: 368},
-    // {key: 'Table 10', cx: 533, cy: 259},
-    // {key: 'Table 11', cx: 638, cy: 349},
-    // {key: 'Table 12', cx: 635, cy: 210},
+    {key: 'Table 1',  cx:  231, cy:  225},
+    {key: 'Table 2',  cx:  231, cy:  342},
+    {key: 'Table 3',  cx:  238, cy:  464},
+    {key: 'Table 4',  cx:  238, cy:  581},
+    {key: 'Table 5',  cx:  243, cy:  702},
+    {key: 'Table 6',  cx:  380, cy:  214},
+    {key: 'Table 7',  cx:  378, cy:  330},
+    {key: 'Table 8',  cx:  380, cy:  452},
+    {key: 'Table 9',  cx:  386, cy:  575},
+    {key: 'Table 10', cx:  380, cy:  701},
+    {key: 'Table 11', cx:  540, cy:  281},
+    {key: 'Table 12', cx:  537, cy:  414},
+    {key: 'Table 13', cx:  542, cy:  552},
+    {key: 'Table 14', cx:  542, cy:  702},
+    {key: 'VIP 1',    cx:  692, cy:  435},
+    {key: 'Table 16', cx:  692, cy:  565},
+    {key: 'Table 17', cx:  691, cy:  703},
+    {key: 'VIP 2',    cx:  925, cy:  430},
+    {key: 'Table 19', cx:  931, cy:  562},
+    {key: 'Table 20', cx:  930, cy:  702},
+    {key: 'Table 21', cx: 1086, cy:  284},
+    {key: 'Table 22', cx: 1084, cy:  418},
+    {key: 'Table 23', cx: 1094, cy:  561},
+    {key: 'Table 24', cx: 1093, cy:  703},
+    {key: 'Table 25', cx: 1256, cy:  257},
+    {key: 'Table 26', cx: 1257, cy:  382},
+    {key: 'Table 27', cx: 1261, cy:  497},
+    {key: 'Table 28', cx: 1272, cy:  606},
+    {key: 'Table 29', cx: 1269, cy:  726},
+    {key: 'Table 30', cx: 1438, cy:  253},
+    {key: 'Table 31', cx: 1435, cy:  369},
+    {key: 'Table 32', cx: 1440, cy:  491},
+    {key: 'Table 33', cx: 1440, cy:  605},
+    {key: 'Table 34', cx: 1446, cy:  716},
 ]
 
+// Only light up tables that actually have guests assigned, so a tap never
+// opens an empty popover while the guest list is still being filled in.
+const SEATED_TABLES = new Set(guests.map(g => g.table))
+const ACTIVE_TABLES = TABLE_POSITIONS.filter(p => SEATED_TABLES.has(p.key))
+
+function guestsAt(key) {
+    return guests.filter(g => g.table === key)
+}
+
+function GuestIcon({guestOf, size}) {
+    return guestOf === 'Hadi'
+        ? <IoMdBowtie className="guest-icon male-icon" size={size}/>
+        : <GiTiara className="guest-icon female-icon" size={size}/>
+}
+
+/* Shared hotspot layer. Lives inside whatever element is transformed, so the
+   browser keeps hit-testing correct under rotation and zoom. */
+// hotspotR is bumped in the fullscreen viewer: at fit-to-screen the default
+// radius lands at ~39px on a phone, under the 44px minimum touch target.
+// Closest table spacing is 109px, so anything under r=54 stays non-overlapping.
+function TableOverlay({selectedKey, onSelect, className, hotspotR = 46}) {
+    return (
+        <svg className={className} viewBox={`0 0 ${MAP_W} ${MAP_H}`}>
+            {ACTIVE_TABLES.map(({key, cx, cy}, i) => (
+                <g key={key}>
+                    <circle cx={cx} cy={cy} r="42" className="table-pulse"
+                            style={{animationDelay: `${i * 0.28}s`}}/>
+                    <circle cx={cx} cy={cy} r="42" className="table-ring"/>
+                    <circle
+                        cx={cx} cy={cy} r={hotspotR}
+                        className={`table-hotspot${selectedKey === key ? ' selected' : ''}`}
+                        onClick={e => onSelect(e, key, cx, cy)}
+                    />
+                </g>
+            ))}
+        </svg>
+    )
+}
+
+const MAX_ZOOM = 4
+
+/* Fullscreen floor plan, as a lightbox. A phone gives the map ~390px of width
+   inline, rendering table numbers at ~8px. Here the plan is sized to fill the
+   screen's HEIGHT and the guest pans sideways through the room — no rotation,
+   so turning the phone never flips the map out from under them. */
+function FloorPlanViewer({onClose, t}) {
+    const [fit, setFit] = useState(null)   // { base, minZoom }
+    const [zoom, setZoom] = useState(1)
+    const [pan, setPan] = useState({x: 0, y: 0})
+    const [selected, setSelected] = useState(null)
+    const stageRef = useRef(null)
+    const pointers = useRef(new Map())
+    const gesture = useRef(null)
+
+    // Fill the stage vertically and let the room run off the sides; zooming out
+    // to minZoom brings the whole plan back into view.
+    const measure = useCallback(() => {
+        const el = stageRef.current
+        if (!el) return
+        const {width: w, height: h} = el.getBoundingClientRect()
+        const PAD = 16
+        const fillH = (h - PAD) / MAP_H
+        const contain = Math.min((w - PAD) / MAP_W, fillH)
+        const base = Math.max(fillH, contain)
+        setFit({base, minZoom: Math.min(1, contain / base)})
+    }, [])
+
+    useLayoutEffect(() => {
+        measure()
+        const el = stageRef.current
+        const ro = el && 'ResizeObserver' in window ? new ResizeObserver(measure) : null
+        ro?.observe(el)
+        window.addEventListener('orientationchange', measure)
+        return () => {
+            ro?.disconnect()
+            window.removeEventListener('orientationchange', measure)
+        }
+    }, [measure])
+
+    useEffect(() => {
+        const onKey = e => { if (e.key === 'Escape') onClose() }
+        window.addEventListener('keydown', onKey)
+        // the stage swallows touch scrolling, so stop the page moving underneath
+        const prev = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+        return () => {
+            window.removeEventListener('keydown', onKey)
+            document.body.style.overflow = prev
+        }
+    }, [onClose])
+
+    const clampPan = useCallback((next, z) => {
+        const el = stageRef.current
+        if (!el || !fit) return next
+        const {width: w, height: h} = el.getBoundingClientRect()
+        // half the overflow on each axis, in the canvas's on-screen orientation
+        const drawnW = MAP_W * fit.base * z
+        const drawnH = MAP_H * fit.base * z
+        const mx = Math.max(0, (drawnW - w) / 2)
+        const my = Math.max(0, (drawnH - h) / 2)
+        return {
+            x: Math.max(-mx, Math.min(mx, next.x)),
+            y: Math.max(-my, Math.min(my, next.y)),
+        }
+    }, [fit])
+
+    const applyZoom = useCallback((nextZoom, originX, originY) => {
+        const el = stageRef.current
+        if (!el) return
+        const r = el.getBoundingClientRect()
+        // keep the point under the fingers/cursor pinned while scaling
+        const cx = originX - r.left - r.width / 2
+        const cy = originY - r.top - r.height / 2
+        setZoom(prevZoom => {
+            const z = Math.max(fit?.minZoom ?? 1, Math.min(MAX_ZOOM, nextZoom))
+            setPan(prevPan => clampPan({
+                x: cx - (cx - prevPan.x) * (z / prevZoom),
+                y: cy - (cy - prevPan.y) * (z / prevZoom),
+            }, z))
+            return z
+        })
+    }, [clampPan, fit])
+
+    const onPointerDown = e => {
+        pointers.current.set(e.pointerId, {x: e.clientX, y: e.clientY})
+        e.currentTarget.setPointerCapture?.(e.pointerId)
+        const pts = [...pointers.current.values()]
+        if (pts.length === 2) {
+            const dx = pts[0].x - pts[1].x, dy = pts[0].y - pts[1].y
+            gesture.current = {dist: Math.hypot(dx, dy), zoom}
+        } else if (pts.length === 1) {
+            gesture.current = {pan: {...pan}, from: {x: e.clientX, y: e.clientY}, moved: 0}
+        }
+    }
+
+    const onPointerMove = e => {
+        if (!pointers.current.has(e.pointerId)) return
+        pointers.current.set(e.pointerId, {x: e.clientX, y: e.clientY})
+        const pts = [...pointers.current.values()]
+        const g = gesture.current
+        if (!g) return
+        if (pts.length >= 2 && g.dist) {
+            const dx = pts[0].x - pts[1].x, dy = pts[0].y - pts[1].y
+            const dist = Math.hypot(dx, dy)
+            applyZoom(g.zoom * (dist / g.dist), (pts[0].x + pts[1].x) / 2, (pts[0].y + pts[1].y) / 2)
+        } else if (pts.length === 1 && g.pan) {
+            const dx = e.clientX - g.from.x, dy = e.clientY - g.from.y
+            g.moved = Math.max(g.moved, Math.hypot(dx, dy))
+            setPan(clampPan({x: g.pan.x + dx, y: g.pan.y + dy}, zoom))
+        }
+    }
+
+    const onPointerUp = e => {
+        const g = gesture.current
+        pointers.current.delete(e.pointerId)
+        // a drag shouldn't also dismiss the sheet; a real tap on empty map should
+        if (pointers.current.size === 0) {
+            if (g?.pan && g.moved < 6 && e.target === e.currentTarget) setSelected(null)
+            gesture.current = null
+        }
+    }
+
+    const onWheel = e => {
+        e.preventDefault()
+        applyZoom(zoom * (e.deltaY < 0 ? 1.15 : 1 / 1.15), e.clientX, e.clientY)
+    }
+
+    const reset = () => { setZoom(1); setPan({x: 0, y: 0}) }
+
+    const handleSelect = (e, key) => {
+        e.stopPropagation()
+        setSelected(cur => cur === key ? null : key)
+    }
+
+    const sheetGuests = selected ? guestsAt(selected) : []
+
+    return (
+        <div className="fp-overlay">
+            <div className="fp-bar">
+                <span className="fp-title">{t.floorPlanTitle}</span>
+                <div className="fp-bar-right">
+                    {Math.abs(zoom - 1) > 0.01 && (
+                        <button className="fp-btn fp-reset" onClick={reset}>{t.resetZoom}</button>
+                    )}
+                    <button className="fp-btn fp-close" onClick={onClose} aria-label={t.close}>✕</button>
+                </div>
+            </div>
+
+            <div
+                className="fp-stage"
+                ref={stageRef}
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                onPointerCancel={onPointerUp}
+                onWheel={onWheel}
+            >
+                {fit && (
+                    <div
+                        className="fp-canvas"
+                        style={{
+                            width: MAP_W,
+                            height: MAP_H,
+                            transform: `translate(-50%, -50%) translate(${pan.x}px, ${pan.y}px) `
+                                + `scale(${fit.base * zoom})`,
+                        }}
+                    >
+                        <img src={seatingImg} alt="" className="fp-img" draggable="false"/>
+                        <TableOverlay
+                            className="fp-overlay-svg"
+                            selectedKey={selected}
+                            onSelect={handleSelect}
+                            hotspotR={52}
+                        />
+                    </div>
+                )}
+            </div>
+
+            {selected ? (
+                <div className="fp-sheet">
+                    <div className="fp-sheet-header">
+                        <span>{t.tableLabel(selected)}</span>
+                        <span className="table-guest-count">
+                            <FiUsers size={11}/>
+                            {sheetGuests.length}
+                        </span>
+                        <button className="popover-close-btn" onClick={() => setSelected(null)}
+                                aria-label={t.close}>✕</button>
+                    </div>
+                    <ul className="fp-sheet-list">
+                        {sheetGuests.map((g, i) => (
+                            <li key={i} className="table-popover-guest">
+                                <span>{g.name}</span>
+                                <GuestIcon guestOf={g.guestOf} size={16}/>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            ) : (
+                <p className="fp-hint">{t.pinchHint}</p>
+            )}
+        </div>
+    )
+}
+
 function SeatingMap({t}) {
-    const [popover, setPopover] = useState(null) // { key, xPct, yPct, above, closing }
+    const [popover, setPopover] = useState(null) // { key, xPct, yPct, closing }
     const [showFade, setShowFade] = useState(false)
+    const [popTop, setPopTop] = useState(0)
+    const [expanded, setExpanded] = useState(false)
     const listRef = useRef(null)
+    const popRef = useRef(null)
+    const wrapRef = useRef(null)
 
     const closePopover = () => {
         setPopover(p => p ? {...p, closing: true} : null)
         setTimeout(() => setPopover(null), 150)
     }
 
-    const tableGuests = useMemo(() => {
-        if (!popover) return []
-        return guests.filter(g => g.table === popover.key)
-    }, [popover])
+    const tableGuests = useMemo(() => popover ? guestsAt(popover.key) : [], [popover])
 
     useEffect(() => {
         const el = listRef.current
         if (!el) return
         setShowFade(el.scrollHeight > el.clientHeight)
         el.scrollTop = 0
+    }, [popover])
+
+    useLayoutEffect(() => {
+        if (!popover || !popRef.current || !wrapRef.current) return
+        const ph = popRef.current.offsetHeight
+        const wh = wrapRef.current.offsetHeight
+        const anchor = (popover.yPct / 100) * wh
+        const GAP = 12, EDGE = 6
+        // open on whichever side of the table has more room, then keep it in bounds
+        const top = anchor > wh / 2 ? anchor - GAP - ph : anchor + GAP
+        setPopTop(Math.max(EDGE, Math.min(top, wh - ph - EDGE)))
     }, [popover])
 
     const handleListScroll = (e) => {
@@ -170,9 +608,7 @@ function SeatingMap({t}) {
             closePopover()
             return
         }
-        const xPct = (cx / 721) * 100
-        const yPct = (cy / 505) * 100
-        const next = {key, xPct, yPct, above: yPct > 42}
+        const next = {key, xPct: (cx / MAP_W) * 100, yPct: (cy / MAP_H) * 100}
         if (popover) {
             setPopover(p => ({...p, closing: true}))
             setTimeout(() => setPopover(next), 150)
@@ -184,31 +620,32 @@ function SeatingMap({t}) {
     return (
         <div className="seating-section">
             <p className="seating-hint">{t.seatingHint}</p>
-            <div className="seating-map-wrap" onClick={closePopover}>
+            <div className="seating-map-wrap" ref={wrapRef} onClick={closePopover}>
                 <img src={seatingImg} alt="Seating arrangement" className="seating-img"/>
-                <svg className="seating-overlay" viewBox="0 0 721 505">
-                    {TABLE_POSITIONS.map(({key, cx, cy}, i) => (
-                        <g key={key}>
-                            <circle cx={cx} cy={cy} r="36" className="table-pulse"
-                                    style={{animationDelay: `${i * 0.28}s`}}/>
-                            <circle cx={cx} cy={cy} r="38" className="table-ring"/>
-                            <circle
-                                cx={cx} cy={cy} r="38"
-                                className={`table-hotspot${popover?.key === key ? ' selected' : ''}`}
-                                onClick={e => handleCircleClick(e, key, cx, cy)}
-                            />
-                        </g>
-                    ))}
-                </svg>
+                <TableOverlay className="seating-overlay" selectedKey={popover?.key} onSelect={handleCircleClick}/>
+
+                {/* Below the breakpoint the inline hotspots are ~20px across — too
+                    small to hit — so the whole map becomes one target that opens
+                    the fullscreen viewer instead. */}
+                <button className="seating-tap-shield" onClick={e => {
+                    e.stopPropagation(); setExpanded(true)
+                }} aria-label={t.viewFloorPlan}/>
+
+                <button className="seating-expand" onClick={e => {
+                    e.stopPropagation(); setExpanded(true)
+                }}>
+                    <FiMaximize2 size={13}/>
+                    <span>{t.viewFloorPlan}</span>
+                </button>
+
                 {popover && (
                     <div
+                        ref={popRef}
                         className={`table-popover${popover.closing ? ' closing' : ''}`}
                         style={{
                             left: `clamp(120px, ${popover.xPct}%, calc(100% - 120px))`,
-                            top: `${popover.yPct}%`,
-                            transform: popover.above
-                                ? 'translate(-50%, calc(-100% - 12px))'
-                                : 'translate(-50%, 12px)',
+                            top: `${popTop}px`,
+                            transform: 'translateX(-50%)',
                         }}
                         onClick={e => e.stopPropagation()}
                     >
@@ -219,7 +656,8 @@ function SeatingMap({t}) {
                                     <FiUsers size={11}/>
                                     {tableGuests.length}
                                 </span>
-                                <button className="popover-close-btn" onClick={closePopover}>✕</button>
+                                <button className="popover-close-btn" onClick={closePopover}
+                                        aria-label={t.close}>✕</button>
                             </div>
                         </div>
                         <div className="table-popover-scroll-wrap">
@@ -227,10 +665,7 @@ function SeatingMap({t}) {
                                 {tableGuests.map((g, i) => (
                                     <li key={i} className="table-popover-guest">
                                         <span>{g.name}</span>
-                                        {g.guestOf === 'Kelvin'
-                                            ? <IoMdBowtie className="guest-icon male-icon" size={16}/>
-                                            : <GiTiara className="guest-icon female-icon" size={16}/>
-                                        }
+                                        <GuestIcon guestOf={g.guestOf} size={16}/>
                                     </li>
                                 ))}
                             </ul>
@@ -239,6 +674,7 @@ function SeatingMap({t}) {
                     </div>
                 )}
             </div>
+            {expanded && <FloorPlanViewer onClose={() => setExpanded(false)} t={t}/>}
         </div>
     )
 }
@@ -287,20 +723,10 @@ export default function App() {
             setMenuClosing(false)
         }, 200)
     }
-    const [locale, setLocale] = useState(() => localStorage.getItem('kelglad_guest_locale') || detectLocale())
-    const [dark, setDark] = useState(() => {
-        const saved = localStorage.getItem('kelglad_guest_theme')
-        if (saved !== null) return saved === 'true'
-        return window.matchMedia('(prefers-color-scheme: dark)').matches
-    })
-
+    const [locale, setLocale] = useState(() => localStorage.getItem('hadifran_guest_locale') || detectLocale())
     useEffect(() => {
-        document.documentElement.setAttribute('data-dark', String(dark))
-        localStorage.setItem('kelglad_guest_theme', String(dark))
-    }, [dark])
-
-    useEffect(() => {
-        localStorage.setItem('kelglad_guest_locale', locale)
+        localStorage.setItem('hadifran_guest_locale', locale)
+        document.documentElement.lang = locale
     }, [locale])
 
     const t = locales[locale]
@@ -341,86 +767,87 @@ export default function App() {
                         <FaBowlFood size={14}/>
                         <span className="menu-btn-label">{t.menuLabel}</span>
                     </button>
-                    <button className="theme-btn-sticky" onClick={() => setDark(d => !d)} aria-label="Toggle theme">
-                        {dark ? <MdLightMode size={16}/> : <MdDarkMode size={16}/>}
-                        <span className="theme-label">{dark ? t.light : t.dark}</span>
-                    </button>
+                    <div className="lang-switcher">
+                        {localeOptions.map((o, i) => (
+                            <Fragment key={o.id}>
+                                {i > 0 && <span className="lang-sep" aria-hidden="true">|</span>}
+                                <button
+                                    className={locale === o.id ? 'lang-opt active' : 'lang-opt'}
+                                    onClick={() => setLocale(o.id)}
+                                >{o.short}</button>
+                            </Fragment>
+                        ))}
+                    </div>
                 </div>
 
-                <div className="heading">
-                    <div className="lang-switcher">
-                        <span
-                            className={locale === 'en-US' ? 'lang-opt active' : 'lang-opt'}
-                            onClick={() => setLocale('en-US')}
-                        >EN</span>
-                        <span className="lang-sep">|</span>
-                        <span
-                            className={locale === 'zh-CN' ? 'lang-opt active' : 'lang-opt'}
-                            onClick={() => setLocale('zh-CN')}
-                        >中文</span>
+                <header className="hero">
+                    <h1 className="hero-names">{t.names}</h1>
+                    <div className="hero-rule" aria-hidden="true">
+                        <i/><span>✦</span><i/>
                     </div>
-                    <p className="heading-names">{t.names}</p>
-                    <TextLoop items={t.loopItems}/>
-                </div>
+                    <p className="hero-date">{t.hero.date}</p>
+                    <p className="hero-time">{t.hero.time}</p>
+                    <p className="hero-venue">
+                        {t.hero.venue}
+                        <span className="hero-club">{t.hero.club}</span>
+                    </p>
+                </header>
                 <PhotoStrip/>
-                <div className="ornament-divider">
-                    <span style={{animationDelay: '0s'}}>✦</span>
-                    <span style={{animationDelay: '0.4s'}}>✦</span>
-                    <span style={{animationDelay: '0.8s'}}>✦</span>
-                </div>
                 {showMenu && <MenuModal onClose={closeMenu} closing={menuClosing} t={t} locale={locale}/>}
 
-                <p className="find-seat-label">{t.findYourSeat}</p>
-                <div className="search-wrap">
-                    <input
-                        className="search-input"
-                        type="text"
-                        placeholder={t.placeholder}
-                        value={query}
-                        onChange={e => setQuery(e.target.value)}
-                    />
-                    {query && (
-                        <button className="clear-btn" onClick={() => setQuery('')} aria-label="Clear">✕</button>
-                    )}
-                </div>
-                <p className="multi-hint">{t.multiHint}</p>
-
-                {query.split(/[,，、]/).some(s => s.trim().length >= 1) && (
-                    <div className="results">
-                        {results.length === 0 ? (
-                            <p className="status">{t.noMatch(query)}</p>
-                        ) : (
-                            <>
-                                <p className="result-count">{t.resultCount(results.length)}</p>
-                                <ul className="guest-list">
-                                    {results.map(({item, matches, term}, i) => (
-                                        <li key={i} className={`guest-card guest-of-${item.guestOf?.toLowerCase()}`}>
-                                            <span className="guest-name">
-                                                {CJK_RE.test(term)
-                                                    ? highlightSubstring(item.name, term)
-                                                    : highlightMatches(item.name, matches?.[0]?.indices)}
-                                            </span>
-                                            <div className="card-right">
-                                                {item.guestOf === 'Kelvin' ? (
-                                                    <IoMdBowtie className="guest-icon male-icon" size={30}/>
-                                                ) : (
-                                                    <GiTiara className="guest-icon female-icon" size={30}/>
-                                                )}
-                                                <span className="table-badge">{t.tableLabel(item.table)}</span>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </>
+                <section className="section">
+                    <h2 className="section-title">{t.findYourSeatTitle}</h2>
+                    <p className="find-seat-label">{t.findYourSeat}</p>
+                    <div className="search-wrap">
+                        <input
+                            className="search-input"
+                            type="text"
+                            placeholder={t.placeholder}
+                            value={query}
+                            onChange={e => setQuery(e.target.value)}
+                        />
+                        {query && (
+                            <button className="clear-btn" onClick={() => setQuery('')} aria-label="Clear">✕</button>
                         )}
                     </div>
-                )}
+                    <p className="multi-hint">{t.multiHint}</p>
 
-                <SeatingMap t={t}/>
+                    {query.split(/[,，、]/).some(s => s.trim().length >= 1) && (
+                        <div className="results">
+                            {results.length === 0 ? (
+                                <p className="status">{t.noMatch(query)}</p>
+                            ) : (
+                                <>
+                                    <p className="result-count">{t.resultCount(results.length)}</p>
+                                    <ul className="guest-list">
+                                        {results.map(({item, matches, term}, i) => (
+                                            <li key={i} className={`guest-card guest-of-${item.guestOf?.toLowerCase()}`}>
+                                                <span className="guest-name">
+                                                    {CJK_RE.test(term)
+                                                        ? highlightSubstring(item.name, term)
+                                                        : highlightMatches(item.name, matches?.[0]?.indices)}
+                                                </span>
+                                                <div className="card-right">
+                                                    <GuestIcon guestOf={item.guestOf} size={28}/>
+                                                    <span className="table-badge">{t.tableLabel(item.table)}</span>
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </>
+                            )}
+                        </div>
+                    )}
+                </section>
+
+                <section className="section">
+                    <h2 className="section-title">{t.theRoom}</h2>
+                    <SeatingMap t={t}/>
+                </section>
             </div>
             <footer className="footer">
                 <div className='footer-item'>
-                    <span>Made with <span className="footer-heart">♥</span> for Hadi & Francesca by Kelvin</span>
+                    <span>Made with <span className="footer-heart">♥</span> for Hadi & Francesca</span>
                 </div>
             </footer>
         </>
