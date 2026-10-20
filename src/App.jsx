@@ -807,6 +807,9 @@ export default function App() {
     const results = useMemo(() => {
         const terms = query.split(/[,，、]/).map(s => s.trim()).filter(Boolean)
         if (!terms.length) return []
+        // Dedupe on the guest object, not the name: a comma-separated query can
+        // match the same person on two terms, but two people really do share a
+        // name across tables (and sometimes on one), and both need a seat shown.
         const seen = new Set()
         const out = []
         for (const term of terms) {
@@ -814,8 +817,8 @@ export default function App() {
                 ? guests.filter(g => g.name.includes(term)).map(item => ({item, matches: null}))
                 : fuse.search(term)
             for (const r of matches) {
-                if (!seen.has(r.item.name)) {
-                    seen.add(r.item.name)
+                if (!seen.has(r.item)) {
+                    seen.add(r.item)
                     out.push({...r, term})
                 }
             }
