@@ -311,11 +311,10 @@ const TABLE_POSITIONS = [
     {key: 'Table 27', cx: 1261, cy:  497},
     {key: 'Table 28', cx: 1272, cy:  606},
     {key: 'Table 29', cx: 1269, cy:  726},
-    {key: 'Table 30', cx: 1438, cy:  253},
-    {key: 'Table 31', cx: 1435, cy:  369},
-    {key: 'Table 32', cx: 1440, cy:  491},
-    {key: 'Table 33', cx: 1440, cy:  605},
-    {key: 'Table 34', cx: 1446, cy:  716},
+    {key: 'Table 30', cx: 1438, cy:  309},
+    {key: 'Table 31', cx: 1435, cy:  425},
+    {key: 'Table 32', cx: 1440, cy:  547},
+    {key: 'Table 33', cx: 1440, cy:  661},
 ]
 
 // Only light up tables that actually have guests assigned, so a tap never
