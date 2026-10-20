@@ -8,6 +8,8 @@ import tableData from './data.json'
 import {locales, localeOptions, shortCode, detectLocale} from './locales'
 import './App.css'
 import seatingImg from './assets/seating.png'
+import haysLogo from './assets/hays-logo.svg'
+import ijCrest from './assets/chij-crest.png'
 
 import img1 from './assets/slider-img/1.webp'
 import img2 from './assets/slider-img/2.webp'
@@ -326,7 +328,21 @@ function guestsAt(key) {
     return guests.filter(g => g.table === key)
 }
 
+// Two tables are badged by where their guests come from rather than by side.
+// Scale is per-logo: the Hays lockup is 3.9:1, so matching box size would let
+// it dwarf the bowtie/tiara it sits beside; the CHIJ crest is near-square.
+const GUEST_BADGES = {
+    Hays: {src: haysLogo, alt: 'Hays', className: 'hays-icon', scale: 0.8},
+    IJ: {src: ijCrest, alt: 'CHIJ', className: 'ij-icon', scale: 1.15},
+}
+
 function GuestIcon({guestOf, size}) {
+    const badge = GUEST_BADGES[guestOf]
+    if (badge) {
+        return <img src={badge.src} alt={badge.alt}
+            className={`guest-icon ${badge.className}`}
+            style={{height: Math.round(size * badge.scale)}} draggable="false"/>
+    }
     return guestOf === 'Hadi'
         ? <IoMdBowtie className="guest-icon male-icon" size={size}/>
         : <GiTiara className="guest-icon female-icon" size={size}/>

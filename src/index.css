@@ -26,6 +26,10 @@
     /* the two sides of the guest list, kept muted so they read as ink first */
     --guest-a: #4b5a6b;
     --guest-b: #8a6a74;
+    /* Hays brand navy, for the one table seated by the employer */
+    --guest-hays: #0a0532;
+    /* CHIJ crest red, for the IJ school-friends table */
+    --guest-ij: #c8102e;
     /* a deep garnet rather than a pure red, so it sits with the brass */
     --heart: #b5342b;
 }
