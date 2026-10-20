@@ -650,7 +650,7 @@
     ]
   },
   {
-    "table": "VIP 1",
+    "table": "VIP Left",
     "guests": [
       {
         "name": "Johan",
@@ -789,7 +789,7 @@
     ]
   },
   {
-    "table": "VIP 2",
+    "table": "VIP Right",
     "guests": [
       {
         "name": "Doreen Teo",
